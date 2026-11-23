@@ -2,6 +2,8 @@ import React,{useCallback,useEffect,useState} from 'react';
 import AsistenteExperto from './AsistenteExperto';
 import {HeartHandshake,HeartPulse,LayoutDashboard,UsersRound,Pill,UtensilsCrossed,Activity,NotebookPen,FileBarChart2,UserRoundCog,Boxes,LogOut,Plus,Search,LoaderCircle,AlertCircle,CheckCircle2,Clock3,CalendarDays,ArrowUpRight,Menu,X,Eye,EyeOff,ShieldCheck,ClipboardCheck,Printer,HandHeart,Info,ChevronRight,Filter,Stethoscope,RefreshCw} from 'lucide-react';
 
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+
 
 const rolesLabel={administrador:'Administrador',enfermero:'Enfermería',cuidador:'Cuidador/a',medico:'Médico/a',familiar:'Familiar'};
 const formatDay=(x)=>x?new Date(x.slice(0,10)+'T12:00:00Z').toLocaleDateString('es-BO',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}):'—';
@@ -11,7 +13,21 @@ const integer=(x)=>Number(x||0);
 const isStaff=u=>u?.nombre_rol!=='familiar';
 async function api(path,opt={}){
  const token=sessionStorage.getItem('aynisalud_token');
- let r;try{r=await fetch('/api'+path,{...opt,headers:{...(opt.body?{'Content-Type':'application/json'}:{}),...(token?{'Authorization':'Bearer '+token}:{}),...(opt.headers||{})}});}catch{throw Error('No se pudo conectar con el servidor. Verifica que el backend esté encendido.');}
+ const endpoint = API_BASE ? `${API_BASE}/api${path}` : `/api${path}`;
+
+ let r;
+ try {
+  r = await fetch(endpoint, {
+   ...opt,
+   headers: {
+    ...(opt.body ? { 'Content-Type': 'application/json' } : {}),
+    ...(token ? { 'Authorization': 'Bearer ' + token } : {}),
+    ...(opt.headers || {})
+   }
+  });
+ } catch {
+  throw Error('No se pudo conectar con el servidor. Verifica que el backend esté encendido.');
+ }
  let data;try{data=await r.json();}catch{throw Error('El servidor devolvió una respuesta inesperada.');}
  if(!r.ok){if(r.status===401&&path!=='/auth/login'){sessionStorage.removeItem('aynisalud_token');window.dispatchEvent(new Event('ayni-expired'));}throw Error(data.error||'No se pudo completar la solicitud.');}return data;
 }
