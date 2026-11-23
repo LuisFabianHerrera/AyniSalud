@@ -11,7 +11,7 @@ import { evaluarConsultaExperta } from './expertSystem.js';
 
 
 dotenv.config();
-const app=express();app.disable('x-powered-by');app.use(helmet());app.use(cors({origin:process.env.CORS_ORIGIN?.split(',')||['http://localhost:5173','http://127.0.0.1:5173']}));app.use(express.json({limit:'100kb'}));
+const app=express();app.disable('x-powered-by');app.use(helmet());app.use(cors({origin:(process.env.CORS_ORIGIN?process.env.CORS_ORIGIN.split(',').map(s=>s.trim().replace(/\/+$/,'')):['https://aynisalud-usalesiana.vercel.app','http://localhost:5173','http://127.0.0.1:5173'])}));app.use(express.json({limit:'100kb'}));
 const staff=['administrador','enfermero','cuidador','medico'];
 const clinical=['administrador','enfermero','medico'];
 const simpleUser='u.id_usuario,u.nombre_completo,u.correo,u.telefono,u.estado,r.nombre_rol';
