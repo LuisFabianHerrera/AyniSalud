@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 
+const API_BASE = (import.meta.env.VITE_API_URL || 'https://aynisalud.onrender.com').replace(/\/+$/, '');
+
 export default function AsistenteExperto() {
   const [abierto, setAbierto] = useState(false);
   const [consulta, setConsulta] = useState('');
@@ -24,7 +26,7 @@ export default function AsistenteExperto() {
 
     try {
       const token = sessionStorage.getItem('aynisalud_token');
-      const res = await fetch('/api/asistente-experto', {
+      const res = await fetch(`${API_BASE}/api/asistente-experto`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -32,18 +34,36 @@ export default function AsistenteExperto() {
         },
         body: JSON.stringify({ mensaje: pregunta }),
       });
-      const data = await res.json();
+
+      const rawText = await res.text();
+      let data = null;
+      try {
+        data = rawText ? JSON.parse(rawText) : null;
+      } catch {
+        data = null;
+      }
+
       if (!res.ok) {
         if (res.status === 401) {
           sessionStorage.removeItem('aynisalud_token');
           window.dispatchEvent(new Event('ayni-expired'));
         }
-        throw new Error(data.error || 'No se pudo procesar la consulta.');
+        throw new Error(
+          data?.error ||
+          data?.message ||
+          rawText ||
+          `Error del servidor (${res.status}) al consultar el protocolo.`
+        );
       }
+
+      if (!data) {
+        throw new Error('El servidor respondió sin un formato JSON válido.');
+      }
+
       if (data.success) setRespuesta(data.resultado);
       else setError(data.error || 'No se pudo procesar la consulta.');
     } catch (err) {
-      setError(err.message || 'Error de conexión con el servidor local.');
+      setError(err.message || 'Error de conexión con el servidor.');
     } finally {
       setCargando(false);
     }
